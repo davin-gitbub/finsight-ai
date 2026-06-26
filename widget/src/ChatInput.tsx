@@ -38,7 +38,10 @@ export default function ChatInput({
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter" && !e.shiftKey) {
-        if (e.isComposing) { imeKeyDown = true; return; }
+        if (e.isComposing) {
+          imeKeyDown = true;
+          return;
+        }
         e.preventDefault();
         if (!streamingRef.current) el.form?.requestSubmit();
       }
@@ -61,7 +64,10 @@ export default function ChatInput({
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    if (streamingRef.current) { onStopRef.current?.(); return; }
+    if (streamingRef.current) {
+      onStopRef.current?.();
+      return;
+    }
     const el = textareaRef.current;
     if (!el) return;
     const trimmed = el.value.trim();
@@ -105,7 +111,9 @@ export default function ChatInput({
           ref={textareaRef}
           defaultValue=""
           onInput={handleInput}
-          placeholder={disabled ? "Connecting..." : (placeholder || "Type your question...")}
+          placeholder={
+            disabled ? "Connecting..." : placeholder || "Type your question..."
+          }
           disabled={disabled}
           rows={1}
           style={{
@@ -114,7 +122,7 @@ export default function ChatInput({
             outline: "none",
             resize: "none",
             backgroundColor: "transparent",
-            fontSize: 14,
+            fontSize: 15,
             color: "#1d1d1f",
             padding: "8px 0",
             fontFamily: "inherit",

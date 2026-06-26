@@ -3,20 +3,31 @@ import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import type { ChatPanelProps, Message } from "./types";
 
-const TEXTS: Record<string, { welcome: (n: string, c: string) => string; err: (c: string) => string; placeholder: string }> = {
+const TEXTS: Record<
+  string,
+  {
+    welcome: (n: string, c: string) => string;
+    err: (c: string) => string;
+    placeholder: string;
+  }
+> = {
   "zh-CN": {
-    welcome: (n, c) => `您好，我是 ${n}，${c} 的智能金融助手。\n\n我可以回答关于公司业务、金融概念和市场术语的问题。请注意，我无法提供投资建议或股价预测。`,
+    welcome: (n, c) =>
+      `您好，我是 ${n}，${c} 的智能金融助手。\n\n我可以回答关于公司业务、金融概念和市场术语的问题。请注意，我无法提供投资建议或股价预测。`,
     err: (c) => `您好，不能回复此问题，我是 FinSight AI，${c} 的智能金融助手。`,
     placeholder: "输入您的问题...",
   },
   "zh-TW": {
-    welcome: (n, c) => `您好，我是 ${n}，${c} 的智能金融助手。\n\n我可以回答關於公司業務、金融概念和市場術語的問題。請注意，我無法提供投資建議或股價預測。`,
+    welcome: (n, c) =>
+      `您好，我是 ${n}，${c} 的智能金融助手。\n\n我可以回答關於公司業務、金融概念和市場術語的問題。請注意，我無法提供投資建議或股價預測。`,
     err: (c) => `您好，無法回覆此問題，我是 FinSight AI，${c} 的智能金融助手。`,
     placeholder: "請輸入您的問題...",
   },
-  "en": {
-    welcome: (n, c) => `Hi, I am ${n}, the AI financial assistant of ${c}.\n\nI can answer questions about financial concepts, market terminology, and company services. Please note that I cannot provide investment advice or stock price predictions.`,
-    err: (c) => `Sorry, I cannot answer this question. I am FinSight AI, the financial assistant of ${c}.`,
+  en: {
+    welcome: (n, c) =>
+      `Hi, I am ${n}, the AI financial assistant of ${c}.\n\nI can answer questions about financial concepts, market terminology, and company services. Please note that I cannot provide investment advice or stock price predictions.`,
+    err: (c) =>
+      `Sorry, I cannot answer this question. I am FinSight AI, the financial assistant of ${c}.`,
     placeholder: "Type your question...",
   },
 };
@@ -52,7 +63,11 @@ export default function ChatPanel({
     async (text: string) => {
       if (!text.trim() || streaming) return;
 
-      const userMsg: Message = { id: `user-${Date.now()}`, role: "user", content: text };
+      const userMsg: Message = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: text,
+      };
       setMessages((prev) => [...prev, userMsg, THINKING_MSG]);
       setStreaming(true);
 
@@ -63,7 +78,10 @@ export default function ChatPanel({
         const res = await fetch(`${apiUrl}/api/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: text, session_id: sessionIdRef.current }),
+          body: JSON.stringify({
+            content: text,
+            session_id: sessionIdRef.current,
+          }),
           signal: abort.signal,
         });
         const data = await res.json();
@@ -76,7 +94,11 @@ export default function ChatPanel({
         if (err.name === "AbortError") return;
         setMessages((prev) => [
           ...prev.filter((m) => m.id !== "thinking"),
-          { id: `err-${Date.now()}`, role: "assistant", content: t.err(companyName) },
+          {
+            id: `err-${Date.now()}`,
+            role: "assistant",
+            content: t.err(companyName),
+          },
         ]);
       }
       setStreaming(false);
@@ -107,10 +129,21 @@ export default function ChatPanel({
           flexShrink: 0,
         }}
       >
-        <div style={{ fontWeight: 600, fontSize: 15, color: "#1d1d1f" }}>{aiName}</div>
+        <div style={{ fontWeight: 600, fontSize: 16, color: "#1d1d1f" }}>
+          {aiName}
+        </div>
         <button
           onClick={onClose}
-          style={{ background: "none", border: "none", cursor: "pointer", padding: 4, borderRadius: 6, color: "#86868b", fontSize: 20, lineHeight: 1 }}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 4,
+            borderRadius: 6,
+            color: "#86868b",
+            fontSize: 20,
+            lineHeight: 1,
+          }}
           aria-label="关闭"
         >
           ✕
@@ -118,7 +151,14 @@ export default function ChatPanel({
       </div>
 
       <MessageList messages={messages} aiName={aiName} />
-      <ChatInput onSend={handleSend} onStop={handleStop} streaming={streaming} disabled={false} primaryColor={primaryColor} placeholder={t.placeholder} />
+      <ChatInput
+        onSend={handleSend}
+        onStop={handleStop}
+        streaming={streaming}
+        disabled={false}
+        primaryColor={primaryColor}
+        placeholder={t.placeholder}
+      />
     </div>
   );
 }

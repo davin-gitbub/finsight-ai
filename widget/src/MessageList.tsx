@@ -9,14 +9,26 @@ interface MessageListProps {
 }
 
 const COPY_ICON = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ width: 12, height: 12 }}>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    style={{ width: 12, height: 12 }}
+  >
     <rect x="9" y="9" width="13" height="13" rx="2" />
     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
   </svg>
 );
 
 const CHECK_ICON = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ width: 12, height: 12 }}>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2.5}
+    style={{ width: 12, height: 12 }}
+  >
     <polyline points="20 6 9 17 4 12" />
   </svg>
 );
@@ -26,10 +38,13 @@ function CopyButton({ text }: { text: string }) {
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {});
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => {});
   };
 
   return (
@@ -49,8 +64,12 @@ function CopyButton({ text }: { text: string }) {
         fontSize: 11,
       }}
       className="copy-btn-fix"
-      onMouseEnter={(e) => { if (!copied) (e.target as HTMLElement).style.color = "#8e8e93"; }}
-      onMouseLeave={(e) => { if (!copied) (e.target as HTMLElement).style.color = "#aeaeb2"; }}
+      onMouseEnter={(e) => {
+        if (!copied) (e.target as HTMLElement).style.color = "#8e8e93";
+      }}
+      onMouseLeave={(e) => {
+        if (!copied) (e.target as HTMLElement).style.color = "#aeaeb2";
+      }}
     >
       {copied ? CHECK_ICON : COPY_ICON}
       {copied ? "已复制" : ""}
@@ -84,12 +103,13 @@ export default function MessageList({ messages, aiName }: MessageListProps) {
                 backgroundColor: "#f5f5f7",
                 borderRadius: 12,
                 padding: "12px 16px",
-                fontSize: 14,
+                fontSize: 15,
                 color: "#1d1d1f",
                 lineHeight: 1.6,
                 margin: "0 auto",
                 textAlign: "center",
                 maxWidth: "100%",
+                fontWeight: 500,
               }}
             >
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -99,14 +119,20 @@ export default function MessageList({ messages, aiName }: MessageListProps) {
           )}
 
           {msg.role === "user" && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+              }}
+            >
               <div
                 style={{
                   backgroundColor: "#007aff",
                   color: "white",
                   borderRadius: "16px 16px 4px 16px",
                   padding: "10px 16px",
-                  fontSize: 14,
+                  fontSize: 15,
                   lineHeight: 1.5,
                 }}
               >
@@ -117,26 +143,43 @@ export default function MessageList({ messages, aiName }: MessageListProps) {
           )}
 
           {msg.role === "assistant" && (
-            <div style={msg.id === "thinking" ? { display: "inline-block" } : {}}>
+            <div
+              style={msg.id === "thinking" ? { display: "inline-block" } : {}}
+            >
               <div
                 style={{
                   backgroundColor: "#f5f5f7",
                   borderRadius: "16px 16px 16px 4px",
                   padding: msg.id === "thinking" ? "8px 14px" : "12px 16px",
-                  fontSize: 14,
+                  fontSize: 15,
                   color: "#1d1d1f",
                   lineHeight: 1.6,
+                  fontWeight: 600,
                   display: msg.id === "thinking" ? "inline-block" : "block",
                 }}
               >
                 {msg.status && msg.streaming && (
-                  <div style={{ color: "#86868b", fontStyle: "italic", fontSize: 13, marginBottom: 4 }}>
+                  <div
+                    style={{
+                      color: "#86868b",
+                      fontStyle: "italic",
+                      fontSize: 13,
+                      marginBottom: 4,
+                    }}
+                  >
                     {msg.status}
                   </div>
                 )}
 
                 {msg.id === "thinking" ? (
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "6px 18px" }}>
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      padding: "6px 18px",
+                    }}
+                  >
                     {[0, 1, 2].map((i) => (
                       <span
                         key={i}
@@ -157,7 +200,12 @@ export default function MessageList({ messages, aiName }: MessageListProps) {
                     remarkPlugins={[remarkGfm]}
                     components={{
                       a: ({ href, children }) => (
-                        <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: "#007aff" }}>
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: "#007aff" }}
+                        >
                           {children}
                         </a>
                       ),
@@ -182,7 +230,9 @@ export default function MessageList({ messages, aiName }: MessageListProps) {
                   />
                 )}
               </div>
-              {!msg.streaming && msg.content && msg.id !== "thinking" && <CopyButton text={msg.content} />}
+              {!msg.streaming && msg.content && msg.id !== "thinking" && (
+                <CopyButton text={msg.content} />
+              )}
             </div>
           )}
         </div>

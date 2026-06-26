@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ChatPanel from "./ChatPanel";
 import type { ChatWidgetProps } from "./types";
+
+const MOBILE_BREAKPOINT = 640;
 
 const DEFAULT_STYLES = {
   button: {
@@ -22,9 +24,8 @@ const DEFAULT_STYLES = {
     position: "fixed" as const,
     bottom: 92,
     zIndex: 999999,
-    width: 380,
-    height: 600,
-    maxHeight: "calc(100vh - 140px)",
+    width: "min(380px, calc(100vw - 32px))",
+    height: "min(600px, calc(100dvh - 100px), calc(100vh - 140px))",
     borderRadius: 16,
     overflow: "hidden",
     boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)",
@@ -35,6 +36,13 @@ const DEFAULT_STYLES = {
     backgroundColor: "rgba(255,255,255,0.95)",
     border: "1px solid rgba(255,255,255,0.3)",
     transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+  },
+  mobilePanel: {
+    bottom: 76,
+    width: "100vw",
+    height: "calc(min(100dvh, 100vh) - 76px)",
+    borderRadius: 0,
+    border: "none",
   },
 };
 
@@ -48,8 +56,49 @@ export default function ChatWidget({
   lang: langProp,
 }: ChatWidgetProps) {
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined"
+      ? window.innerWidth < MOBILE_BREAKPOINT
+      : false,
+  );
   const isRight = position === "right";
-  const currentLang = langProp || (typeof window !== "undefined" ? localStorage.getItem("finsight-lang") || "en" : "en");
+  const currentLang =
+    langProp ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem("finsight-lang") || "en"
+      : "en");
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // 移动端打开面板时锁定 body 滚动，关闭时恢复
+  useEffect(() => {
+    if (isMobile && open) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [isMobile, open]);
+
+  const panelStyle = isMobile
+    ? {
+        ...DEFAULT_STYLES.panel,
+        ...DEFAULT_STYLES.mobilePanel,
+        [isRight ? "right" : "left"]: 0,
+      }
+    : {
+        ...DEFAULT_STYLES.panel,
+        [isRight ? "right" : "left"]: 24,
+        opacity: open ? 1 : 0,
+        transform: open
+          ? "translateY(0) scale(1)"
+          : "translateY(20px) scale(0.95)",
+      };
 
   return (
     <>
@@ -57,12 +106,7 @@ export default function ChatWidget({
       {open && (
         <div
           style={{
-            ...DEFAULT_STYLES.panel,
-            [isRight ? "right" : "left"]: 24,
-            opacity: open ? 1 : 0,
-            transform: open
-              ? "translateY(0) scale(1)"
-              : "translateY(20px) scale(0.95)",
+            ...panelStyle,
             pointerEvents: open ? "auto" : "none",
           }}
         >
@@ -78,50 +122,52 @@ export default function ChatWidget({
         </div>
       )}
 
-      {/* 浮动按钮 */}
-      <button
-        style={{
-          ...DEFAULT_STYLES.button,
-          [isRight ? "right" : "left"]: 24,
-          backgroundColor: open ? "#f0f2f5" : primaryColor,
-        }}
-        onClick={() => setOpen(!open)}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "scale(1.08)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = "scale(1)";
-        }}
-        aria-label={open ? "关闭聊天" : "打开聊天"}
-      >
-        {open ? (
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#1d1d1f"
-            strokeWidth="2"
-            strokeLinecap="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        ) : (
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          </svg>
-        )}
-      </button>
+      {/* 浮动按钮 — 移动端隐藏 */}
+      {!isMobile && (
+        <button
+          style={{
+            ...DEFAULT_STYLES.button,
+            [isRight ? "right" : "left"]: 24,
+            backgroundColor: open ? "#f0f2f5" : primaryColor,
+          }}
+          onClick={() => setOpen(!open)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.08)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+          }}
+          aria-label={open ? "关闭聊天" : "打开聊天"}
+        >
+          {open ? (
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#1d1d1f"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          ) : (
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+          )}
+        </button>
+      )}
     </>
   );
 }
