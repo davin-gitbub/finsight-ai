@@ -813,7 +813,7 @@
           try {
             const resp = await fetch(API + "/api/chat/stream", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: headersWithToken(),
               body: JSON.stringify({ content: text, session_id: sessionId }),
               signal: abortController.signal,
             });
@@ -823,17 +823,20 @@
             const decoder = new TextDecoder();
             let buf = "";
             let fullText = "";
-            let pendingText = "";
-
-            // Throttle display to ~40ms per update for natural reading speed
-            function flushDisplay() {
-              if (!pendingText) return;
-              const sc = document.getElementById("stream-content");
-              if (sc) {
-                sc.innerHTML = esc(fullText).replace(/\n/g, "<br>");
+            // Use rAF for smooth per-token streaming (vs batching with setTimeout)
+            let rafPending = false;
+            function scheduleFlush() {
+              if (!rafPending) {
+                rafPending = true;
+                requestAnimationFrame(() => {
+                  rafPending = false;
+                  const sc = document.getElementById("stream-content");
+                  if (sc && fullText) {
+                    sc.innerHTML = esc(fullText).replace(/\n/g, "<br>");
+                  }
+                  scrollBottom();
+                });
               }
-              scrollBottom();
-              pendingText = "";
             }
 
             while (true) {
@@ -856,14 +859,7 @@
                   } else if (ev.type === "token") {
                     if (!fullText) clearThinkDots();
                     fullText += ev.content;
-                    pendingText += ev.content;
-                    // Debounce display updates
-                    if (!window._displayTimer) {
-                      window._displayTimer = setTimeout(() => {
-                        window._displayTimer = null;
-                        flushDisplay();
-                      }, 180);
-                    }
+                    scheduleFlush();
                   } else if (ev.type === "done") {
                     sessionId = ev.session_id;
                   } else if (ev.type === "error") {
@@ -874,12 +870,11 @@
             }
 
             if (!loading) return;
-            // Flush remaining display
-            if (window._displayTimer) {
-              clearTimeout(window._displayTimer);
-              window._displayTimer = null;
+            // Final display flush
+            const sc = document.getElementById("stream-content");
+            if (sc && fullText) {
+              sc.innerHTML = esc(fullText).replace(/\n/g, "<br>");
             }
-            flushDisplay();
             const el = document.getElementById("streaming-msg");
             if (el) {
               el.id = "";
