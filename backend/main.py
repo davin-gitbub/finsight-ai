@@ -44,9 +44,10 @@ async def lifespan(app: FastAPI):
     try:
         print("Pre-loading embedding model...")
         import time
+
         t0 = time.time()
         get_embedding("预热")
-        print(f"Embedding model loaded in {time.time()-t0:.1f}s")
+        print(f"Embedding model loaded in {time.time() - t0:.1f}s")
     except Exception as e:
         print(f"Warning: Embedding model init failed: {e}")
 
@@ -62,7 +63,7 @@ app = FastAPI(title=settings.app_name, version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -109,6 +110,7 @@ async def security_middleware(request, call_next):
 
 
 import os
+
 _env_path = os.path.join(os.path.dirname(__file__), ".env")
 if os.path.exists(_env_path):
     mode = os.stat(_env_path).st_mode
@@ -212,7 +214,9 @@ async def chat(request: ChatRequest):
                 full_reply = event["content"]
 
         session.add_message("assistant", full_reply)
-        return ChatResponse(reply=full_reply, session_id=session.session_id, sources=sources)
+        return ChatResponse(
+            reply=full_reply, session_id=session.session_id, sources=sources
+        )
     finally:
         tokens = len(full_reply) // 2
         rate_limiter.release(session.session_id, tokens)
@@ -245,16 +249,16 @@ async def chat_stream(request: ChatRequest):
             ):
                 if event["type"] == "token":
                     full_reply += event["content"]
-                    yield f"data: {json.dumps({'type':'token','content':event['content']})}\n\n"
+                    yield f"data: {json.dumps({'type': 'token', 'content': event['content']})}\n\n"
                 elif event["type"] == "status":
-                    yield f"data: {json.dumps({'type':'status','content':event['content']})}\n\n"
+                    yield f"data: {json.dumps({'type': 'status', 'content': event['content']})}\n\n"
                 elif event["type"] == "sources":
-                    yield f"data: {json.dumps({'type':'sources','sources':event['sources']})}\n\n"
+                    yield f"data: {json.dumps({'type': 'sources', 'sources': event['sources']})}\n\n"
                 elif event["type"] == "done":
                     session.add_message("assistant", full_reply)
-                    yield f"data: {json.dumps({'type':'done','session_id':session.session_id})}\n\n"
+                    yield f"data: {json.dumps({'type': 'done', 'session_id': session.session_id})}\n\n"
                 elif event["type"] == "error":
-                    yield f"data: {json.dumps({'type':'error','content':event['content']})}\n\n"
+                    yield f"data: {json.dumps({'type': 'error', 'content': event['content']})}\n\n"
         finally:
             tokens = len(full_reply) // 2
             rate_limiter.release(session.session_id, tokens)
@@ -266,7 +270,8 @@ async def chat_stream(request: ChatRequest):
 def _error_stream(msg: str):
     """返回 SSE 格式的错误流"""
     import json
-    yield f"data: {json.dumps({'type':'error','content':msg})}\n\n"
+
+    yield f"data: {json.dumps({'type': 'error', 'content': msg})}\n\n"
     yield "data: [DONE]\n\n"
 
 
@@ -296,7 +301,9 @@ async def feedback(request: FeedbackRequest):
         "timestamp": time.time(),
     }
 
-    with open("feedback.jsonl", "a", encoding="utf-8") as f:
+    feedback_path = os.path.abspath(settings.feedback_path)
+    os.makedirs(os.path.dirname(feedback_path) or ".", exist_ok=True)
+    with open(feedback_path, "a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
     return FeedbackResponse(status="ok")
@@ -327,4 +334,6 @@ async def get_page_token():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="127.0.0.1", port=5173, reload=settings.debug)
+    uvicorn.run(
+        "main:app", host=settings.host, port=settings.port, reload=settings.debug
+    )

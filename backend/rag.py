@@ -6,6 +6,7 @@
 """
 
 import re
+import os
 import httpx
 from typing import AsyncGenerator, Optional
 
@@ -96,7 +97,9 @@ def get_chroma_client():
     if _chroma_client is None:
         import chromadb
 
-        _chroma_client = chromadb.PersistentClient(path=settings.chroma_persist_dir)
+        _chroma_client = chromadb.PersistentClient(
+            path=os.path.abspath(settings.chroma_persist_dir)
+        )
     return _chroma_client
 
 
@@ -199,7 +202,11 @@ def build_rag_prompt(
             context_parts.append(
                 f"[{i}] Source: {doc['title']} (p.{doc['page']})\n{doc['content']}\n"
             )
-    context_text = "\n".join(context_parts) if context_parts else "(No relevant reference materials found)"
+    context_text = (
+        "\n".join(context_parts)
+        if context_parts
+        else "(No relevant reference materials found)"
+    )
 
     system_prompt = SYSTEM_PROMPT_TPL.format(
         company_name=company_name, ai_name=ai_name, context=context_text
@@ -232,7 +239,11 @@ async def rag_pipeline_stream(
     # 1. 拒绝检测
     rejection = check_rejection(query)
     if rejection:
-        yield {"type": "error", "code": rejection["code"], "content": rejection["message"]}
+        yield {
+            "type": "error",
+            "code": rejection["code"],
+            "content": rejection["message"],
+        }
         return
 
     # 2. 检索
@@ -240,12 +251,18 @@ async def rag_pipeline_stream(
     try:
         docs = retrieve(query)
     except Exception as e:
-        yield {"type": "error", "code": "RETRIEVAL_FAILED", "content": f"检索失败：{str(e)}"}
+        yield {
+            "type": "error",
+            "code": "RETRIEVAL_FAILED",
+            "content": f"检索失败：{str(e)}",
+        }
         return
 
     # 3. 构建 Prompt
     yield {"type": "status", "content": "正在生成回答..."}
-    system_prompt, messages = build_rag_prompt(query, docs, history, company_name, ai_name)
+    system_prompt, messages = build_rag_prompt(
+        query, docs, history, company_name, ai_name
+    )
 
     # 4. 流式调用 LLM
     full_response = ""
@@ -254,14 +271,16 @@ async def rag_pipeline_stream(
             full_response += token
             yield {"type": "token", "content": token}
     except Exception as e:
-        yield {"type": "error", "code": "LLM_ERROR", "content": f"生成回答失败：{str(e)}"}
+        yield {
+            "type": "error",
+            "code": "LLM_ERROR",
+            "content": f"生成回答失败：{str(e)}",
+        }
         return
 
     # 5. 返回来源和完成信号
     sources = [
-        {"title": d["title"], "page": d["page"]}
-        for d in docs
-        if d["score"] > 0.15
+        {"title": d["title"], "page": d["page"]} for d in docs if d["score"] > 0.15
     ]
     yield {"type": "sources", "sources": sources}
     yield {"type": "done", "content": full_response, "sources": sources}

@@ -8,7 +8,7 @@ if (root) {
     <React.StrictMode>
       <ChatWidget
         tenant="finsight"
-        apiUrl="http://localhost:5173"
+        apiUrl={window.location.origin}
         companyName="FinSight Securities"
         aiName="FinSight AI"
         position="right"
