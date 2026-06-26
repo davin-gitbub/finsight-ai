@@ -15,6 +15,7 @@ services:
       - PORT=8000
       - PYTHONUNBUFFERED=1
     volumes:
+      - ../backend:/app
       - chroma_data:/app/chroma_db
       - hf_cache:/app/hf_cache
       - feedback_data:/app/feedback
