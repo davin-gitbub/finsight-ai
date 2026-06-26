@@ -1,0 +1,47 @@
+# --- Sensitive config ---
+.env
+.env.*
+backend/.env
+**/.env
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# --- Node ---
+node_modules/
+widget/node_modules/
+
+# --- Database ---
+chroma_db/
+backend/chroma_db/
+*.jsonl
+
+# --- IDE ---
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- MCP config (contains tokens) ---
+.mcp.json
+
+# --- Claude Code config (contains project settings) ---
+.claude/
+
+# --- Logs ---
+*.log
+cc-rig-init.log
+
+# --- Backup ---
+.cc-rig-backup/
+
+# --- Build ---
+widget/dist/

@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinSight AI — 智能金融助手</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+        background: #f5f5f7;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #1d1d1f;
+        padding: 40px;
+        -webkit-font-smoothing: antialiased;
+      }
+      @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+      /* ─── Container ─── */
+      .embed-frame {
+        width: 100%;
+        max-width: 520px;
+        height: 75vh;
+        min-height: 420px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* ─── Header ─── */
+      .embed-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px 12px;
+        flex-shrink: 0;
+      }
+      .embed-header h1 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1d1d1f;
+        letter-spacing: -0.01em;
+      }
+      .lang-dropdown button:hover { background: rgba(0,0,0,0.04); }
+      .lang-dropdown button.active { color: #007aff; font-weight: 500; }
+      .embed-header .status {
+        font-size: 11px;
+        color: #8e8e93;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .embed-header .dot { width: 6px; height: 6px; border-radius: 50%; }
+      .dot.on { background: #30d158; }
+      .dot.off { background: #ff453a; }
+
+      /* ─── Chat ─── */
+      .embed-chat {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 16px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .embed-chat .welcome {
+        text-align: center;
+        padding: 48px 24px 24px;
+        color: #8e8e93;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .embed-chat .welcome h2 {
+        font-size: 17px;
+        font-weight: 600;
+        color: #1d1d1f;
+        margin-bottom: 6px;
+      }
+      .msg {
+        max-width: 82%;
+        line-height: 1.45;
+        animation: fadeIn 0.2s ease;
+      }
+      .msg.user { align-self: flex-end; }
+      .msg.ai { align-self: flex-start; }
+      .msg .bubble {
+        padding: 10px 14px;
+        font-size: 14px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .msg .copy-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        margin-top: 2px;
+        border-radius: 6px;
+        color: #aeaeb2;
+        transition: background 0.15s, color 0.15s;
+        align-self: flex-end;
+      }
+      .msg .copy-btn { display: inline-flex; align-items: center; gap: 3px; }
+      .msg .copy-btn:hover { background: rgba(0,0,0,0.05); color: #8e8e93; }
+      .msg .copy-btn.copied { color: #30d158; }
+
+      /* ─── Thinking dots ─── */
+      .think-dots {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 0;
+      }
+      .think-dots {
+        padding: 6px 18px;
+      }
+      .think-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #8e8e93;
+        animation: dotWave 1.2s ease-in-out infinite;
+      }
+      .think-dots span:nth-child(1) { animation-delay: 0s; }
+      .think-dots span:nth-child(2) { animation-delay: 0.15s; }
+      .think-dots span:nth-child(3) { animation-delay: 0.3s; }
+      @keyframes dotWave {
+        0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+        30% { transform: translateY(-6px); opacity: 1; }
+      }
+      .msg.user .bubble {
+        background: #007aff;
+        color: #fff;
+        border-radius: 18px 18px 4px 18px;
+      }
+      .msg.ai .bubble {
+        background: #f2f2f7;
+        color: #1d1d1f;
+        border-radius: 18px 18px 18px 4px;
+      }
+
+      .loading-row {
+        display: flex; align-items: center; gap: 6px;
+        padding: 6px 0; color: #8e8e93; font-size: 13px;
+      }
+      .loading-row .sp {
+        width: 12px; height: 12px;
+        border: 2px solid #e5e5ea;
+        border-top-color: #007aff;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
+
+      /* ─── Input ─── */
+      .embed-input {
+        flex-shrink: 0;
+        padding: 6px 16px 14px;
+      }
+      .input-row {
+        display: flex; gap: 6px; align-items: flex-end;
+        background: #f2f2f7;
+        border-radius: 14px;
+        padding: 4px 4px 4px 16px;
+        transition: box-shadow 0.2s;
+      }
+      .input-row:focus-within {
+        box-shadow: inset 0 0 0 2px rgba(0,122,255,0.2);
+      }
+      .input-row textarea {
+        flex: 1; border: none; outline: none; resize: none;
+        background: transparent; font-size: 15px; color: #1d1d1f;
+        padding: 8px 0; font-family: inherit; line-height: 1.4;
+        min-height: 22px; max-height: 100px;
+      }
+      .input-row textarea::placeholder { color: #aeaeb2; }
+      .input-row button {
+        width: 34px; height: 34px; border-radius: 10px;
+        border: none; background: #007aff;
+        cursor: pointer; display: flex; align-items: center;
+        justify-content: center; flex-shrink: 0;
+        transition: opacity 0.2s;
+      }
+      .input-row button:hover { opacity: 0.85; }
+      .input-row button:disabled { opacity: 0.3; cursor: default; }
+      .input-row button svg { width: 16px; height: 16px; color: #fff; }
+
+      /* ─── Bottom bar ─── */
+      .bottom-bar {
+        position: fixed;
+        bottom: 32px; left: 0; right: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        padding: 14px 20px 20px;
+        background: linear-gradient(transparent, rgba(245,245,247,0.95) 30%);
+        pointer-events: none;
+      }
+      .bottom-bar .item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #8e8e93;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .bottom-bar .icon { font-size: 14px; }
+
+      /* ─── Footer ─── */
+      .footer-info {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        text-align: center;
+        padding: 20px 20px 10px;
+        font-size: 11px;
+        color: #aeaeb2;
+        pointer-events: none;
+        background: linear-gradient(transparent, rgba(245,245,247,0.98) 40%);
+      }
+      .footer-info .company {
+        font-weight: 500;
+        color: #8e8e93;
+      }
+      .footer-info .copyright {
+        margin-top: 2px;
+      }
+      @media (max-width: 640px) {
+        .footer-info { font-size: 10px; padding: 16px 12px 8px; }
+      }
+
+      /* Large screens (>1024px) */
+      @media (min-width: 1024px) {
+        .embed-frame { max-width: 720px; }
+        body { padding: 60px; }
+      }
+      @media (min-width: 1440px) {
+        .embed-frame { max-width: 800px; }
+      }
+      @media (max-width: 640px) {
+        body { padding: 0; }
+        .embed-frame { max-width: 100%; height: 88vh; min-height: 90vh; border-radius: 0; box-shadow: none; }
+        .embed-header { padding: 14px 16px 10px; }
+        .embed-chat { padding: 6px 12px; }
+        .embed-input { padding: 4px 12px 12px; }
+        .bottom-bar { font-size: 11px; padding: 8px 12px 12px; gap: 14px; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Language selector (page top-right) -->
+    <div style="position:fixed;top:16px;right:80px;z-index:100">
+      <div style="position:relative;">
+        <button class="lang-btn" id="lang-btn" style="background:rgba(255,255,255,0.9);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(0,0,0,0.06);border-radius:10px;padding:6px 12px;font-size:12px;color:#8e8e93;cursor:pointer;font-family:inherit;transition:background 0.15s;display:flex;align-items:center;gap:4px;">简体中文</button>
+        <div class="lang-dropdown" id="lang-dropdown" style="display:none;position:absolute;top:100%;right:0;margin-top:4px;background:white;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.1),0 1px 4px rgba(0,0,0,0.04);overflow:hidden;z-index:10;min-width:120px;">
+          <button data-lang="zh-CN" class="active" style="display:block;width:100%;padding:8px 14px;border:none;background:none;font-size:13px;color:#1d1d1f;cursor:pointer;font-family:inherit;text-align:left;transition:background 0.1s;">简体中文</button>
+          <button data-lang="zh-TW" style="display:block;width:100%;padding:8px 14px;border:none;background:none;font-size:13px;color:#1d1d1f;cursor:pointer;font-family:inherit;text-align:left;transition:background 0.1s;">繁體中文</button>
+          <button data-lang="en" style="display:block;width:100%;padding:8px 14px;border:none;background:none;font-size:13px;color:#1d1d1f;cursor:pointer;font-family:inherit;text-align:left;transition:background 0.1s;">English</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="embed-frame" id="chat-frame">
+      <div class="embed-header">
+        <h1>FinSight AI</h1>
+        <div class="status">
+            <span class="dot" id="dot"></span>
+            <span id="status-text">在线</span>
+          </div>
+        </div>
+
+      <div class="embed-chat" id="chat-area">
+        <div class="welcome" id="welcome">
+          <h2>FinSight AI</h2>
+          <p>智能金融助手<br>回答关于公司业务、金融概念和市场术语的问题</p>
+        </div>
+      </div>
+
+      <div class="embed-input">
+        <div class="input-row">
+          <textarea id="input" rows="1" placeholder="输入您的问题..."></textarea>
+          <button type="button" id="send-btn" aria-label="发送">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="finsight-chat-root"></div>
+
+    <div class="bottom-bar">
+      <span class="item"><span class="icon">📊</span> 金融知识库</span>
+      <span class="item"><span class="icon">⚡</span> 实时流式</span>
+      <span class="item"><span class="icon">🔒</span> 数据安全</span>
+    </div>
+
+    <div class="footer-info">
+      <div class="company">FinSight Securities</div>
+      <div class="copyright">&copy; 2026 FinSight Securities. All rights reserved.</div>
+    </div>
+
+    <script>
+      const API = "http://localhost:5173";
+      let PAGE_TOKEN = "";
+
+      // ─── 获取页面验证 Token ───
+      fetch(API + "/api/token").then(r => r.json()).then(d => { PAGE_TOKEN = d.token; }).catch(() => {});
+      function headersWithToken(extra) {
+        return { "Content-Type": "application/json", "x-page-token": PAGE_TOKEN, ...extra };
+      }
+
+      // ─── Language / i18n ───
+      const LANG = {
+        "zh-CN": {
+          langLabel: "简体中文",
+          statusOnline: "在线",
+          statusOffline: "离线",
+          welcome: "智能金融助手<br>回答关于公司业务、金融概念和市场术语的问题",
+          placeholder: "输入您的问题...",
+          generating: "生成中",
+          stop: "停止",
+          copied: "已复制",
+          features: '<span class="item"><span class="icon">📊</span> 金融知识库</span><span class="item"><span class="icon">⚡</span> 实时流式</span><span class="item"><span class="icon">🔒</span> 数据安全</span>',
+          company: "FinSight Securities",
+          copyright: "© 2026 FinSight Securities. All rights reserved.",
+          errorMsg: "您好，不能回复此问题，我是 FinSight AI，FinSight Securities 的智能金融助手。",
+        },
+        "zh-TW": {
+          langLabel: "繁體中文",
+          statusOnline: "在線",
+          statusOffline: "離線",
+          welcome: "智能金融助手<br>回答關於公司業務、金融概念和市場術語的問題",
+          placeholder: "請輸入您的問題...",
+          generating: "生成中",
+          stop: "停止",
+          copied: "已複製",
+          features: '<span class="item"><span class="icon">📊</span> 金融知識庫</span><span class="item"><span class="icon">⚡</span> 即時串流</span><span class="item"><span class="icon">🔒</span> 資料安全</span>',
+          company: "FinSight 證券公司",
+          copyright: "© 2026 FinSight Securities. All rights reserved.",
+          errorMsg: "您好，無法回覆此問題，我是 FinSight AI，FinSight 證券公司 的智能金融助手。",
+        },
+        "en": {
+          langLabel: "English",
+          statusOnline: "Online",
+          statusOffline: "Offline",
+          welcome: "AI Financial Assistant<br>Ask about financial products, market terms, and company services",
+          placeholder: "Type your question...",
+          generating: "Generating",
+          stop: "Stop",
+          copied: "Copied",
+          features: '<span class="item"><span class="icon">📊</span> Knowledge Base</span><span class="item"><span class="icon">⚡</span> Real-time</span><span class="item"><span class="icon">🔒</span> Data Security</span>',
+          company: "FinSight Securities",
+          copyright: "© 2026 FinSight Securities. All rights reserved.",
+          errorMsg: "Sorry, I am FinSight AI, the intelligent financial assistant of FinSight Securities.",
+        },
+      };
+
+      let currentLang = localStorage.getItem("finsight-lang") || "en";
+
+      function applyLang(lang) {
+        currentLang = lang;
+        localStorage.setItem("finsight-lang", lang);
+        const t = LANG[lang];
+
+        // Header
+        document.getElementById("lang-btn").textContent = t.langLabel;
+        document.getElementById("status-text").textContent = t.statusOnline;
+
+        // Welcome
+        document.getElementById("welcome").innerHTML = "<h2>FinSight AI</h2><p>" + t.welcome + "</p>";
+
+        // Placeholder
+        document.getElementById("input").placeholder = t.placeholder;
+
+        // Features
+        document.querySelector(".bottom-bar").innerHTML = t.features;
+
+        // Footer
+        document.querySelector(".footer-info .company").textContent = t.company;
+        document.querySelector(".footer-info .copyright").textContent = t.copyright;
+
+        // Dropdown active
+        document.querySelectorAll("#lang-dropdown button").forEach(b => {
+          b.classList.toggle("active", b.dataset.lang === lang);
+        });
+
+        // Store for error messages
+        window._errMsg = t.errorMsg;
+      }
+
+      // Language dropdown toggle
+      document.getElementById("lang-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        const dd = document.getElementById("lang-dropdown");
+        dd.style.display = dd.style.display === "none" ? "block" : "none";
+      });
+      document.addEventListener("click", () => {
+        document.getElementById("lang-dropdown").style.display = "none";
+      });
+      document.getElementById("lang-dropdown").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        applyLang(btn.dataset.lang);
+        document.getElementById("lang-dropdown").style.display = "none";
+      });
+
+      // Apply initial language
+      applyLang(currentLang);
+      const chatArea = document.getElementById("chat-area");
+      const welcome = document.getElementById("welcome");
+      const input = document.getElementById("input");
+      const sendBtn = document.getElementById("send-btn");
+
+      let sessionId = null;
+      let loading = false;
+      let abortController = null;
+      let imeKeyDown = false;
+
+      input.addEventListener("input", () => {
+        input.style.height = "auto";
+        input.style.height = Math.min(input.scrollHeight, 100) + "px";
+      });
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          if (e.isComposing) { imeKeyDown = true; return; }
+          e.preventDefault();
+          if (!loading && input.value.trim()) send();
+        }
+      });
+
+      input.addEventListener("keyup", (e) => {
+        if (e.key === "Enter" && !e.shiftKey && imeKeyDown) {
+          imeKeyDown = false;
+          if (!loading && input.value.trim()) send();
+        }
+      });
+
+      sendBtn.addEventListener("click", () => {
+        if (loading) { stopLoading(); return; }
+        if (!loading && input.value.trim()) send();
+      });
+
+      function scrollBottom() { chatArea.scrollTop = chatArea.scrollHeight; }
+
+      function copyText(btn, text) {
+        navigator.clipboard.writeText(text).then(() => {
+          btn.classList.add("copied");
+          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>已复制';
+          setTimeout(() => {
+            btn.classList.remove("copied");
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+          }, 2000);
+        }).catch(() => {});
+      }
+
+      function addCopyBtn(container, text) {
+        const btn = document.createElement("button");
+        btn.className = "copy-btn";
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+        btn.onclick = () => copyText(btn, text);
+        container.appendChild(btn);
+      }
+
+      function esc(s) {
+        const m = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+        return s.replace(/[&<>"']/g, c => m[c]);
+      }
+
+      function resetSendBtn() {
+        sendBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+      }
+
+      // ─── SSE Streaming ───
+
+      function showStreaming() {
+        loading = true;
+        sendBtn.innerHTML = '<svg viewBox="0 0 24 24" style="width:18px;height:18px;"><rect x="5" y="5" width="14" height="14" rx="3" fill="#d1d1d6"/></svg>';
+        const aiDiv = document.createElement("div");
+        aiDiv.className = "msg ai";
+        aiDiv.id = "streaming-msg";
+        aiDiv.innerHTML = '<div class="bubble"><div class="think-dots" id="think-dots"><span></span><span></span><span></span></div><span id="stream-content"></span></div>';
+        chatArea.appendChild(aiDiv);
+        scrollBottom();
+      }
+
+      function clearThinkDots() {
+        const dots = document.getElementById("think-dots");
+        if (dots) dots.remove();
+      }
+
+      function stopLoading() {
+        if (abortController) { abortController.abort(); abortController = null; }
+        loading = false;
+        resetSendBtn();
+        document.getElementById("streaming-msg")?.remove();
+      }
+
+      function send() {
+        const text = input.value.trim();
+        input.value = ""; input.style.height = "auto";
+        if (loading || !text) return;
+        welcome.style.display = "none";
+
+        const userDiv = document.createElement("div");
+        userDiv.className = "msg user";
+        userDiv.innerHTML = '<div class="bubble">' + esc(text) + "</div>";
+        addCopyBtn(userDiv, text);
+        chatArea.appendChild(userDiv);
+        scrollBottom();
+
+        abortController = new AbortController();
+
+        (async () => {
+          try {
+            const resp = await fetch(API + "/api/chat/stream", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ content: text, session_id: sessionId }),
+              signal: abortController.signal
+            });
+
+            showStreaming();
+            const reader = resp.body.getReader();
+            const decoder = new TextDecoder();
+            let buf = "";
+            let fullText = "";
+            let pendingText = "";
+
+            // Throttle display to ~40ms per update for natural reading speed
+            function flushDisplay() {
+              if (!pendingText) return;
+              const sc = document.getElementById("stream-content");
+              if (sc) {
+                sc.innerHTML = esc(fullText).replace(/\n/g, "<br>");
+              }
+              scrollBottom();
+              pendingText = "";
+            }
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buf += decoder.decode(value, { stream: true });
+
+              const lines = buf.split("\n");
+              buf = lines.pop() || "";
+
+              for (const line of lines) {
+                if (!line.startsWith("data: ")) continue;
+                const raw = line.slice(6);
+                if (raw === "[DONE]") continue;
+
+                try {
+                  const ev = JSON.parse(raw);
+                  if (ev.type === "status") {
+                    // Status received but we just show dots
+                  } else if (ev.type === "token") {
+                    if (!fullText) clearThinkDots();
+                    fullText += ev.content;
+                    pendingText += ev.content;
+                    // Debounce display updates
+                    if (!window._displayTimer) {
+                      window._displayTimer = setTimeout(() => {
+                        window._displayTimer = null;
+                        flushDisplay();
+                      }, 180);
+                    }
+                  } else if (ev.type === "done") {
+                    sessionId = ev.session_id;
+                  } else if (ev.type === "error") {
+                    fullText = ev.content;
+                  }
+                } catch {}
+              }
+            }
+
+            if (!loading) return;
+            // Flush remaining display
+            if (window._displayTimer) {
+              clearTimeout(window._displayTimer);
+              window._displayTimer = null;
+            }
+            flushDisplay();
+            const el = document.getElementById("streaming-msg");
+            if (el) {
+              el.id = "";
+              el.innerHTML = '<div class="bubble">' + esc(fullText).replace(/\n/g, "<br>") + "</div>";
+              if (fullText) addCopyBtn(el, fullText);
+            }
+            loading = false;
+            resetSendBtn();
+            scrollBottom();
+          } catch (err) {
+            if (err.name === "AbortError") return;
+            document.getElementById("streaming-msg")?.remove();
+            const errMsg = window._errMsg || "您好，不能回复此问题，我是 FinSight AI，FinSight Securities 的智能金融助手。";
+            const eDiv = document.createElement("div");
+            eDiv.className = "msg ai";
+            eDiv.innerHTML = '<div class="bubble" style="color:#ff453a;">' + errMsg + "</div>";
+            addCopyBtn(eDiv, errMsg);
+            chatArea.appendChild(eDiv);
+            scrollBottom();
+            loading = false;
+            resetSendBtn();
+          }
+        })();
+      }
+
+      const dot = document.getElementById("dot");
+      const statusText = document.getElementById("status-text");
+      async function check() {
+        try {
+          const r = await fetch(API + "/health");
+          if (r.ok) { dot.className = "dot on"; statusText.textContent = "在线"; }
+          else throw Error();
+        } catch { dot.className = "dot off"; statusText.textContent = "离线"; }
+      }
+      check();
+      setInterval(check, 15000);
+    </script>
+
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
