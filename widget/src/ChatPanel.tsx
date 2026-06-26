@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import type { ChatPanelProps, Message } from "./types";
@@ -51,6 +51,22 @@ export default function ChatPanel({
   const [streaming, setStreaming] = useState(false);
   const sessionIdRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const pageTokenRef = useRef<string>("");
+
+  // 获取页面验证 token，每 4 分钟刷新
+  useEffect(() => {
+    const fetchToken = () => {
+      fetch(`${apiUrl}/api/token`)
+        .then((r) => r.json())
+        .then((d) => {
+          pageTokenRef.current = d.token;
+        })
+        .catch(() => {});
+    };
+    fetchToken();
+    const timer = setInterval(fetchToken, 240_000); // 4 min < 5 min expiry
+    return () => clearInterval(timer);
+  }, [apiUrl]);
 
   const THINKING_MSG: Message = {
     id: "thinking",
@@ -77,7 +93,10 @@ export default function ChatPanel({
       try {
         const res = await fetch(`${apiUrl}/api/chat`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-page-token": pageTokenRef.current,
+          },
           body: JSON.stringify({
             content: text,
             session_id: sessionIdRef.current,

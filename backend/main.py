@@ -91,7 +91,15 @@ async def security_middleware(request, call_next):
     if is_bot_ua and path.startswith("/api/"):
         return JSONResponse({"error": "访问被拒绝"}, status_code=403)
 
-    # 2. IP 速率限制（所有 API 路径）
+    # 2. Page Token 验证（防外部直接调 API）
+    if path.startswith("/api/") and request.method in ("POST", "PUT", "DELETE"):
+        from ratelimit import verify_page_token
+
+        token = request.headers.get("x-page-token", "")
+        if not verify_page_token(token):
+            return JSONResponse({"error": "invalid or expired token"}, status_code=401)
+
+    # 3. IP 速率限制（所有 API 路径）
     if path.startswith(("/api/", "/ws/")):
         ok, msg = ip_limiter.check(client_ip)
         if not ok:
