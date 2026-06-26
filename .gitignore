@@ -43,5 +43,14 @@ cc-rig-init.log
 # --- Backup ---
 .cc-rig-backup/
 
+# --- Claude Code / cc-rig 生成文件（不上 GitHub） ---
+.cc-rig.json
+CLAUDE.md
+CLAUDE.local.md
+PLAYBOOK.md
+agent_docs/
+memory/
+PRD.md
+
 # --- Build ---
 widget/dist/
