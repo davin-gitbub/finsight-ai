@@ -1,6 +1,7 @@
 # --- Sensitive config ---
 .env
 .env.*
+!.env.example
 backend/.env
 **/.env
 
