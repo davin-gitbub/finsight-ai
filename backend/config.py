@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     debug: bool = False
     # 服务器绑定
     host: str = "0.0.0.0"
-    port: int = 8000
+    port: int = 5173
     # CORS 白名单 — 逗号分隔，同源部署时设为空字符串即可
     cors_origins: str = "http://localhost:8000,http://localhost:5173,http://127.0.0.1:8000,http://127.0.0.1:5173"
 

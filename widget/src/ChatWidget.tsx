@@ -33,8 +33,8 @@ const DEFAULT_STYLES = {
     flexDirection: "column" as const,
     backdropFilter: "blur(20px)",
     WebkitBackdropFilter: "blur(20px)",
-    backgroundColor: "rgba(255,255,255,0.95)",
-    border: "1px solid rgba(255,255,255,0.3)",
+    backgroundColor: "rgba(15,23,42,0.97)",
+    border: "1px solid rgba(255,255,255,0.06)",
     transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
   },
   mobilePanel: {
@@ -62,16 +62,34 @@ export default function ChatWidget({
       : false,
   );
   const isRight = position === "right";
-  const currentLang =
-    langProp ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem("finsight-lang") || "en"
-      : "en");
+
+  function getSavedLang() {
+    return (
+      langProp ||
+      (typeof window !== "undefined"
+        ? localStorage.getItem("finsight-lang") || "zh-CN"
+        : "zh-CN")
+    );
+  }
+  const [currentLang, setCurrentLang] = useState(getSavedLang);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Listen for global language changes
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setCurrentLang(e.detail);
+    };
+    window.addEventListener("finsight-lang-change", handler as EventListener);
+    return () =>
+      window.removeEventListener(
+        "finsight-lang-change",
+        handler as EventListener,
+      );
   }, []);
 
   // 移动端打开面板时锁定 body 滚动，关闭时恢复
@@ -145,7 +163,7 @@ export default function ChatWidget({
               height="22"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#1d1d1f"
+              stroke="#f1f5f9"
               strokeWidth="2"
               strokeLinecap="round"
             >

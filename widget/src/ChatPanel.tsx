@@ -13,13 +13,13 @@ const TEXTS: Record<
 > = {
   "zh-CN": {
     welcome: (n, c) =>
-      `您好，我是 ${n}，${c} 的智能金融助手。\n\n我可以回答关于公司业务、金融概念和市场术语的问题。请注意，我无法提供投资建议或股价预测。`,
+      `您好，我是 ${c} 的智能金融助手 ${n}。\n\n我可以回答关于公司业务、金融概念和市场术语的问题。请注意，我无法提供投资建议或股价预测。`,
     err: (c) => `您好，不能回复此问题，我是 FinSight AI，${c} 的智能金融助手。`,
     placeholder: "输入您的问题...",
   },
   "zh-TW": {
     welcome: (n, c) =>
-      `您好，我是 ${n}，${c} 的智能金融助手。\n\n我可以回答關於公司業務、金融概念和市場術語的問題。請注意，我無法提供投資建議或股價預測。`,
+      `您好，我是 ${c} 的智能金融助手 ${n}。\n\n我可以回答關於公司業務、金融概念和市場術語的問題。請注意，我無法提供投資建議或股價預測。`,
     err: (c) => `您好，無法回覆此問題，我是 FinSight AI，${c} 的智能金融助手。`,
     placeholder: "請輸入您的問題...",
   },
@@ -138,17 +138,17 @@ export default function ChatPanel({
       <div
         style={{
           padding: "16px 20px",
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
-          backgroundColor: "rgba(255,255,255,0.8)",
+          backgroundColor: "rgba(15,23,42,0.8)",
           flexShrink: 0,
         }}
       >
-        <div style={{ fontWeight: 600, fontSize: 16, color: "#1d1d1f" }}>
+        <div style={{ fontWeight: 600, fontSize: 16, color: "#f1f5f9" }}>
           {aiName}
         </div>
         <button
@@ -159,7 +159,7 @@ export default function ChatPanel({
             cursor: "pointer",
             padding: 4,
             borderRadius: 6,
-            color: "#86868b",
+            color: "#94a3b8",
             fontSize: 20,
             lineHeight: 1,
           }}

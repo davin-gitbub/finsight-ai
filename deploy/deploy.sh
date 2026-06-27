@@ -56,6 +56,9 @@ npx vite build
 WIDGET_SIZE=$(du -sh dist 2>/dev/null | cut -f1)
 echo "  ✓ widget/dist 构建完成 (${WIDGET_SIZE})"
 
+# Vite outputs both index.html (homepage) and widget.html (demo iframe) to dist/
+echo "  ✓ index.html (homepage) + widget.html (demo) → dist/"
+
 # ──── 3. 检查 .env 配置 ────
 echo ""
 echo "[3/6] 检查环境配置..."

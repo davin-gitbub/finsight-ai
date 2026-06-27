@@ -57,7 +57,7 @@ function CopyButton({ text }: { text: string }) {
         cursor: "pointer",
         padding: "3px 4px",
         borderRadius: 5,
-        color: copied ? "#30d158" : "#aeaeb2",
+        color: copied ? "#34d399" : "#64748b",
         display: "inline-flex",
         alignItems: "center",
         gap: 2,
@@ -65,10 +65,10 @@ function CopyButton({ text }: { text: string }) {
       }}
       className="copy-btn-fix"
       onMouseEnter={(e) => {
-        if (!copied) (e.target as HTMLElement).style.color = "#8e8e93";
+        if (!copied) (e.target as HTMLElement).style.color = "#94a3b8";
       }}
       onMouseLeave={(e) => {
-        if (!copied) (e.target as HTMLElement).style.color = "#aeaeb2";
+        if (!copied) (e.target as HTMLElement).style.color = "#64748b";
       }}
     >
       {copied ? CHECK_ICON : COPY_ICON}
@@ -100,11 +100,11 @@ export default function MessageList({ messages, aiName }: MessageListProps) {
           {msg.role === "system" && (
             <div
               style={{
-                backgroundColor: "#f5f5f7",
+                backgroundColor: "#1e293b",
                 borderRadius: 12,
                 padding: "12px 16px",
                 fontSize: 15,
-                color: "#1d1d1f",
+                color: "#e2e8f0",
                 lineHeight: 1.6,
                 margin: "0 auto",
                 textAlign: "center",
@@ -128,7 +128,7 @@ export default function MessageList({ messages, aiName }: MessageListProps) {
             >
               <div
                 style={{
-                  backgroundColor: "#007aff",
+                  backgroundColor: "#3b82f6",
                   color: "white",
                   borderRadius: "16px 16px 4px 16px",
                   padding: "10px 16px",
@@ -148,11 +148,11 @@ export default function MessageList({ messages, aiName }: MessageListProps) {
             >
               <div
                 style={{
-                  backgroundColor: "#f5f5f7",
+                  backgroundColor: "#1e293b",
                   borderRadius: "16px 16px 16px 4px",
                   padding: msg.id === "thinking" ? "8px 14px" : "12px 16px",
                   fontSize: 15,
-                  color: "#1d1d1f",
+                  color: "#e2e8f0",
                   lineHeight: 1.6,
                   fontWeight: 600,
                   display: msg.id === "thinking" ? "inline-block" : "block",
@@ -161,7 +161,7 @@ export default function MessageList({ messages, aiName }: MessageListProps) {
                 {msg.status && msg.streaming && (
                   <div
                     style={{
-                      color: "#86868b",
+                      color: "#94a3b8",
                       fontStyle: "italic",
                       fontSize: 13,
                       marginBottom: 4,
@@ -187,7 +187,7 @@ export default function MessageList({ messages, aiName }: MessageListProps) {
                           width: 6,
                           height: 6,
                           borderRadius: "50%",
-                          background: "#8e8e93",
+                          background: "#64748b",
                           display: "inline-block",
                           animation: "dotWave 1.2s ease-in-out infinite",
                           animationDelay: `${i * 0.15}s`,
@@ -204,7 +204,7 @@ export default function MessageList({ messages, aiName }: MessageListProps) {
                           href={href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{ color: "#007aff" }}
+                          style={{ color: "#818cf8" }}
                         >
                           {children}
                         </a>

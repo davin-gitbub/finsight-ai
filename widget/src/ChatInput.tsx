@@ -88,10 +88,10 @@ export default function ChatInput({
     <div
       style={{
         padding: "12px 16px 16px",
-        borderTop: "1px solid rgba(0,0,0,0.06)",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
-        backgroundColor: "rgba(255,255,255,0.8)",
+        backgroundColor: "rgba(15,23,42,0.8)",
         flexShrink: 0,
       }}
     >
@@ -101,10 +101,10 @@ export default function ChatInput({
           display: "flex",
           gap: 8,
           alignItems: "flex-end",
-          backgroundColor: "#f5f5f7",
+          backgroundColor: "#1e293b",
           borderRadius: 12,
           padding: "4px 4px 4px 16px",
-          border: "1px solid rgba(0,0,0,0.04)",
+          border: "1px solid rgba(255,255,255,0.06)",
         }}
       >
         <textarea
@@ -123,7 +123,7 @@ export default function ChatInput({
             resize: "none",
             backgroundColor: "transparent",
             fontSize: 15,
-            color: "#1d1d1f",
+            color: "#e2e8f0",
             padding: "8px 0",
             fontFamily: "inherit",
             lineHeight: 1.5,
@@ -151,7 +151,7 @@ export default function ChatInput({
         >
           {streaming ? (
             <svg width="18" height="18" viewBox="0 0 24 24">
-              <rect x="5" y="5" width="14" height="14" rx="3" fill="#d1d1d6" />
+              <rect x="5" y="5" width="14" height="14" rx="3" fill="#64748b" />
             </svg>
           ) : (
             <svg

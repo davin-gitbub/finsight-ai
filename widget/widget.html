@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinSight AI — 智能金融助手</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+          "Helvetica Neue", sans-serif;
+        background: #0f172a;
+        margin: 0;
+        padding: 8px 0 8px 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        color: #e2e8f0;
+        -webkit-font-smoothing: antialiased;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0;
+        }
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ─── Container ─── */
+      .embed-frame {
+        width: 100%;
+        max-width: 720px;
+        height: calc(100vh - 16px);
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ─── Header ─── */
+      .embed-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 24px 16px;
+        flex-shrink: 0;
+      }
+      .embed-header h1 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #f1f5f9;
+        letter-spacing: -0.01em;
+      }
+      .embed-header .status {
+        font-size: 11px;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .embed-header .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+      }
+      .dot.on {
+        background: #30d158;
+      }
+      .dot.off {
+        background: #ff453a;
+      }
+
+      /* ─── Chat ─── */
+      .embed-chat {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px 20px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .embed-chat .welcome {
+        text-align: center;
+        padding: 20px 16px 16px;
+        color: #94a3b8;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .embed-chat .welcome h2 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #f1f5f9;
+        margin-bottom: 8px;
+      }
+      .msg {
+        max-width: 88%;
+        line-height: 1.45;
+        animation: fadeIn 0.2s ease;
+      }
+      .msg.user {
+        align-self: flex-end;
+      }
+      .msg.ai {
+        align-self: flex-start;
+      }
+      .msg .bubble {
+        padding: 10px 14px;
+        font-size: 15px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .msg .copy-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        margin-top: 2px;
+        border-radius: 6px;
+        color: #64748b;
+        transition:
+          background 0.15s,
+          color 0.15s;
+        align-self: flex-end;
+      }
+      .msg .copy-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .msg .copy-btn:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: #94a3b8;
+      }
+      .msg .copy-btn.copied {
+        color: #34d399;
+      }
+
+      /* ─── Thinking dots ─── */
+      .think-dots {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 0;
+      }
+      .think-dots {
+        padding: 6px 18px;
+      }
+      .think-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #64748b;
+        animation: dotWave 1.2s ease-in-out infinite;
+      }
+      .think-dots span:nth-child(1) {
+        animation-delay: 0s;
+      }
+      .think-dots span:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      .think-dots span:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      @keyframes dotWave {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.3;
+        }
+        30% {
+          transform: translateY(-6px);
+          opacity: 1;
+        }
+      }
+      .msg.user .bubble {
+        background: #3b82f6;
+        color: #fff;
+        border-radius: 18px 18px 4px 18px;
+      }
+      .msg.ai .bubble {
+        background: #1e293b;
+        color: #e2e8f0;
+        border-radius: 18px 18px 18px 4px;
+        font-weight: 600;
+      }
+
+      .loading-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 0;
+        color: #94a3b8;
+        font-size: 13px;
+      }
+      .loading-row .sp {
+        width: 12px;
+        height: 12px;
+        border: 2px solid #334155;
+        border-top-color: #6366f1;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+      }
+
+      /* ─── Input ─── */
+      .embed-input {
+        flex-shrink: 0;
+        padding: 8px 16px 8px;
+      }
+      .input-row {
+        display: flex;
+        gap: 6px;
+        align-items: flex-end;
+        background: #1e293b;
+        border-radius: 14px;
+        padding: 4px 4px 4px 16px;
+        transition: box-shadow 0.2s;
+      }
+      .input-row:focus-within {
+        box-shadow: inset 0 0 0 2px rgba(99, 102, 241, 0.3);
+      }
+      .input-row textarea {
+        flex: 1;
+        border: none;
+        outline: none;
+        resize: none;
+        background: transparent;
+        font-size: 15px;
+        color: #e2e8f0;
+        padding: 8px 0;
+        font-family: inherit;
+        line-height: 1.4;
+        min-height: 22px;
+        max-height: 100px;
+      }
+      .input-row textarea::placeholder {
+        color: #64748b;
+      }
+      .input-row button {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        border: none;
+        background: #007aff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: opacity 0.2s;
+      }
+      .input-row button:hover {
+        opacity: 0.85;
+      }
+      .input-row button:disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
+      .input-row button svg {
+        width: 16px;
+        height: 16px;
+        color: #fff;
+      }
+
+      /* ─── Bottom bar ─── */
+      /* Large screens (>1024px) */
+      @media (min-width: 1024px) {
+        .embed-frame {
+          max-width: 800px;
+        }
+      }
+      @media (min-width: 1440px) {
+        .embed-frame {
+          max-width: 880px;
+        }
+      }
+      @media (max-width: 640px) {
+        .embed-frame {
+          max-width: 100%;
+          height: calc(100vh - 16px);
+          min-height: 280px;
+        }
+        .embed-header {
+          padding: 14px 16px 10px;
+        }
+        .embed-chat {
+          padding: 6px 12px;
+        }
+        .embed-input {
+          padding: 4px 12px 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="embed-frame" id="chat-frame">
+      <div class="embed-header">
+        <h1>FinSight AI</h1>
+        <div class="status">
+          <span class="dot" id="dot"></span>
+          <span id="status-text">在线</span>
+        </div>
+      </div>
+
+      <div class="embed-chat" id="chat-area">
+        <div class="welcome" id="welcome">
+          <h2>FinSight AI</h2>
+          <p>智能金融助手<br />回答关于公司业务、金融概念和市场术语的问题</p>
+        </div>
+      </div>
+
+      <div class="embed-input">
+        <div class="input-row">
+          <textarea
+            id="input"
+            rows="1"
+            placeholder="输入您的问题..."
+          ></textarea>
+          <button type="button" id="send-btn" aria-label="发送">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API = window.location.origin;
+      let PAGE_TOKEN = "";
+
+      // ─── 获取页面验证 Token ───
+      fetch(API + "/api/token")
+        .then((r) => r.json())
+        .then((d) => {
+          PAGE_TOKEN = d.token;
+        })
+        .catch(() => {});
+      function headersWithToken(extra) {
+        return {
+          "Content-Type": "application/json",
+          "x-page-token": PAGE_TOKEN,
+          ...extra,
+        };
+      }
+
+      // ─── Language / i18n ───
+      const LANG = {
+        "zh-CN": {
+          langLabel: "简体中文",
+          statusOnline: "在线",
+          statusOffline: "离线",
+          welcome:
+            "您好，我是 FinSight AI，FinSight Securities 的智能金融助手。<br><br>我可以回答关于公司业务、金融概念和市场术语的问题。请注意，我无法提供投资建议或股价预测。",
+          placeholder: "输入您的问题...",
+          generating: "生成中",
+          stop: "停止",
+          copied: "已复制",
+          features:
+            '<span class="item"><span class="icon">📊</span> 金融知识库</span><span class="item"><span class="icon">⚡</span> 实时流式</span><span class="item"><span class="icon">🔒</span> 数据安全</span>',
+          company: "FinSight Securities",
+          copyright: "© 2026 FinSight Securities. All rights reserved.",
+          errorMsg:
+            "您好，不能回复此问题，我是 FinSight AI，FinSight Securities 的智能金融助手。",
+        },
+        "zh-TW": {
+          langLabel: "繁體中文",
+          statusOnline: "在線",
+          statusOffline: "離線",
+          welcome:
+            "您好，我是 FinSight AI，FinSight Securities 的智能金融助手。<br><br>我可以回答關於公司業務、金融概念和市場術語的問題。請注意，我無法提供投資建議或股價預測。",
+          placeholder: "請輸入您的問題...",
+          generating: "生成中",
+          stop: "停止",
+          copied: "已複製",
+          features:
+            '<span class="item"><span class="icon">📊</span> 金融知識庫</span><span class="item"><span class="icon">⚡</span> 即時串流</span><span class="item"><span class="icon">🔒</span> 資料安全</span>',
+          company: "FinSight Securities",
+          copyright: "© 2026 FinSight Securities. All rights reserved.",
+          errorMsg:
+            "您好，無法回覆此問題，我是 FinSight AI，FinSight Securities 的智能金融助手。",
+        },
+        en: {
+          langLabel: "English",
+          statusOnline: "Online",
+          statusOffline: "Offline",
+          welcome:
+            "Hi, I am FinSight AI, the intelligent financial assistant of FinSight Securities.<br><br>I can answer questions about financial concepts, market terminology, and company services. Please note that I cannot provide investment advice or stock price predictions.",
+          placeholder: "Type your question...",
+          generating: "Generating",
+          stop: "Stop",
+          copied: "Copied",
+          features:
+            '<span class="item"><span class="icon">📊</span> Knowledge Base</span><span class="item"><span class="icon">⚡</span> Real-time</span><span class="item"><span class="icon">🔒</span> Data Security</span>',
+          company: "FinSight Securities",
+          copyright: "© 2026 FinSight Securities. All rights reserved.",
+          errorMsg:
+            "Sorry, I am FinSight AI, the intelligent financial assistant of FinSight Securities.",
+        },
+      };
+
+      let currentLang = localStorage.getItem("finsight-lang") || "zh-CN";
+
+      function applyLang(lang) {
+        currentLang = lang;
+        localStorage.setItem("finsight-lang", lang);
+        const t = LANG[lang];
+
+        // Header status
+        document.getElementById("status-text").textContent = t.statusOnline;
+
+        // Welcome
+        document.getElementById("welcome").innerHTML =
+          "<p>" + t.welcome + "</p>";
+
+        // Placeholder
+        document.getElementById("input").placeholder = t.placeholder;
+
+        // Store for error messages
+        window._errMsg = t.errorMsg;
+      }
+
+      // Apply initial language (from global selector via localStorage, default zh-CN)
+      applyLang(currentLang);
+
+      // Listen for language changes from parent page
+      window.addEventListener("message", (e) => {
+        if (e.data && e.data.type === "lang-change" && e.data.lang) {
+          applyLang(e.data.lang);
+        }
+      });
+
+      const chatArea = document.getElementById("chat-area");
+      const welcome = document.getElementById("welcome");
+      const input = document.getElementById("input");
+      const sendBtn = document.getElementById("send-btn");
+
+      let sessionId = null;
+      let loading = false;
+      let abortController = null;
+      let imeKeyDown = false;
+
+      input.addEventListener("input", () => {
+        input.style.height = "auto";
+        input.style.height = Math.min(input.scrollHeight, 100) + "px";
+      });
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          if (e.isComposing) {
+            imeKeyDown = true;
+            return;
+          }
+          e.preventDefault();
+          if (!loading && input.value.trim()) send();
+        }
+      });
+
+      input.addEventListener("keyup", (e) => {
+        if (e.key === "Enter" && !e.shiftKey && imeKeyDown) {
+          imeKeyDown = false;
+          if (!loading && input.value.trim()) send();
+        }
+      });
+
+      sendBtn.addEventListener("click", () => {
+        if (loading) {
+          stopLoading();
+          return;
+        }
+        if (!loading && input.value.trim()) send();
+      });
+
+      function scrollBottom() {
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+
+      function copyText(btn, text) {
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            btn.classList.add("copied");
+            btn.innerHTML =
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>已复制';
+            setTimeout(() => {
+              btn.classList.remove("copied");
+              btn.innerHTML =
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+            }, 2000);
+          })
+          .catch(() => {});
+      }
+
+      function addCopyBtn(container, text) {
+        const btn = document.createElement("button");
+        btn.className = "copy-btn";
+        btn.innerHTML =
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+        btn.onclick = () => copyText(btn, text);
+        container.appendChild(btn);
+      }
+
+      function esc(s) {
+        const m = {
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        };
+        return s.replace(/[&<>"']/g, (c) => m[c]);
+      }
+
+      function resetSendBtn() {
+        sendBtn.innerHTML =
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+      }
+
+      // ─── SSE Streaming ───
+
+      function showStreaming() {
+        loading = true;
+        sendBtn.innerHTML =
+          '<svg viewBox="0 0 24 24" style="width:18px;height:18px;"><rect x="5" y="5" width="14" height="14" rx="3" fill="#d1d1d6"/></svg>';
+        const aiDiv = document.createElement("div");
+        aiDiv.className = "msg ai";
+        aiDiv.id = "streaming-msg";
+        aiDiv.innerHTML =
+          '<div class="bubble"><div class="think-dots" id="think-dots"><span></span><span></span><span></span></div><span id="stream-content"></span></div>';
+        chatArea.appendChild(aiDiv);
+        scrollBottom();
+      }
+
+      function clearThinkDots() {
+        const dots = document.getElementById("think-dots");
+        if (dots) dots.remove();
+      }
+
+      function stopLoading() {
+        if (abortController) {
+          abortController.abort();
+          abortController = null;
+        }
+        loading = false;
+        resetSendBtn();
+        document.getElementById("streaming-msg")?.remove();
+      }
+
+      function send() {
+        const text = input.value.trim();
+        input.value = "";
+        input.style.height = "auto";
+        if (loading || !text) return;
+        welcome.style.display = "none";
+
+        const userDiv = document.createElement("div");
+        userDiv.className = "msg user";
+        userDiv.innerHTML = '<div class="bubble">' + esc(text) + "</div>";
+        addCopyBtn(userDiv, text);
+        chatArea.appendChild(userDiv);
+        scrollBottom();
+
+        abortController = new AbortController();
+
+        (async () => {
+          try {
+            const resp = await fetch(API + "/api/chat/stream", {
+              method: "POST",
+              headers: headersWithToken(),
+              body: JSON.stringify({ content: text, session_id: sessionId }),
+              signal: abortController.signal,
+            });
+
+            showStreaming();
+            const reader = resp.body.getReader();
+            const decoder = new TextDecoder();
+            let buf = "";
+            let fullText = "";
+            // Use rAF for smooth per-token streaming (vs batching with setTimeout)
+            let rafPending = false;
+            function scheduleFlush() {
+              if (!rafPending) {
+                rafPending = true;
+                requestAnimationFrame(() => {
+                  rafPending = false;
+                  const sc = document.getElementById("stream-content");
+                  if (sc && fullText) {
+                    sc.innerHTML = esc(fullText).replace(/\n/g, "<br>");
+                  }
+                  scrollBottom();
+                });
+              }
+            }
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buf += decoder.decode(value, { stream: true });
+
+              const lines = buf.split("\n");
+              buf = lines.pop() || "";
+
+              for (const line of lines) {
+                if (!line.startsWith("data: ")) continue;
+                const raw = line.slice(6);
+                if (raw === "[DONE]") continue;
+
+                try {
+                  const ev = JSON.parse(raw);
+                  if (ev.type === "status") {
+                    // Status received but we just show dots
+                  } else if (ev.type === "token") {
+                    if (!fullText) clearThinkDots();
+                    fullText += ev.content;
+                    scheduleFlush();
+                  } else if (ev.type === "done") {
+                    sessionId = ev.session_id;
+                  } else if (ev.type === "error") {
+                    fullText = ev.content;
+                  }
+                } catch {}
+              }
+            }
+
+            if (!loading) return;
+            // Final display flush
+            const sc = document.getElementById("stream-content");
+            if (sc && fullText) {
+              sc.innerHTML = esc(fullText).replace(/\n/g, "<br>");
+            }
+            const el = document.getElementById("streaming-msg");
+            if (el) {
+              el.id = "";
+              el.innerHTML =
+                '<div class="bubble">' +
+                esc(fullText).replace(/\n/g, "<br>") +
+                "</div>";
+              if (fullText) addCopyBtn(el, fullText);
+            }
+            loading = false;
+            resetSendBtn();
+            scrollBottom();
+          } catch (err) {
+            if (err.name === "AbortError") return;
+            document.getElementById("streaming-msg")?.remove();
+            const errMsg =
+              window._errMsg ||
+              "您好，不能回复此问题，我是 FinSight AI，FinSight Securities 的智能金融助手。";
+            const eDiv = document.createElement("div");
+            eDiv.className = "msg ai";
+            eDiv.innerHTML =
+              '<div class="bubble" style="color:#ff453a;">' + errMsg + "</div>";
+            addCopyBtn(eDiv, errMsg);
+            chatArea.appendChild(eDiv);
+            scrollBottom();
+            loading = false;
+            resetSendBtn();
+          }
+        })();
+      }
+
+      const dot = document.getElementById("dot");
+      const statusText = document.getElementById("status-text");
+      async function check() {
+        try {
+          const r = await fetch(API + "/health");
+          if (r.ok) {
+            dot.className = "dot on";
+            statusText.textContent = "在线";
+          } else throw Error();
+        } catch {
+          dot.className = "dot off";
+          statusText.textContent = "离线";
+        }
+      }
+      check();
+      setInterval(check, 15000);
+    </script>
+  </body>
+</html>
