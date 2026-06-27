@@ -13,22 +13,63 @@ from config import settings
 # ──── 已知爬虫/机器人 User-Agent 关键词 ────
 
 BOT_UA_KEYWORDS = [
-    "bot", "crawler", "spider", "scraper", "curl", "wget", "python-requests",
-    "python-httpx", "go-http-client", "java/", "okhttp", "ruby", "scrapy",
-    "axios", "aiohttp", "httplib", "urllib", "libwww", "lwp", "fetch",
-    "node-fetch", "php", "perl", "nethttp", "httpclient", "selenium",
-    "headless", "phantom", "puppeteer", "playwright", "cypress",
+    "bot",
+    "crawler",
+    "spider",
+    "scraper",
+    "curl",
+    "wget",
+    "python-requests",
+    "python-httpx",
+    "go-http-client",
+    "java/",
+    "okhttp",
+    "ruby",
+    "scrapy",
+    "axios",
+    "aiohttp",
+    "httplib",
+    "urllib",
+    "libwww",
+    "lwp",
+    "fetch",
+    "node-fetch",
+    "php",
+    "perl",
+    "nethttp",
+    "httpclient",
+    "selenium",
+    "headless",
+    "phantom",
+    "puppeteer",
+    "playwright",
+    "cypress",
 ]
 
 # ──── Token 签发 ────
 
-_secret = os.urandom(32).hex()
+_secret: str = None  # type: ignore
+
+
+def _get_secret() -> str:
+    global _secret
+    if _secret is not None:
+        return _secret
+    # 优先使用配置中的固定密钥（持久化，重启不变）
+    from config import settings
+
+    if settings.page_token_secret:
+        _secret = settings.page_token_secret
+    else:
+        # 自动生成（每次重启变化，旧 token 失效）
+        _secret = os.urandom(32).hex()
+    return _secret
 
 
 def generate_page_token() -> str:
     """生成页面加载时下发的验证 token"""
     ts = int(time.time())
-    raw = f"finsight:{ts}:{_secret}"
+    raw = f"finsight:{ts}:{_get_secret()}"
     sig = hashlib.sha256(raw.encode()).hexdigest()[:12]
     return f"{ts}:{sig}"
 
@@ -41,13 +82,16 @@ def verify_page_token(token: str) -> bool:
         sig = parts[1]
         if time.time() - ts > 300:
             return False
-        expected = hashlib.sha256(f"finsight:{ts}:{_secret}".encode()).hexdigest()[:12]
+        expected = hashlib.sha256(
+            f"finsight:{ts}:{_get_secret()}".encode()
+        ).hexdigest()[:12]
         return hmac.compare_digest(sig, expected)
     except (IndexError, ValueError):
         return False
 
 
 # ──── 机器人检测 ────
+
 
 def is_bot(user_agent: str) -> Tuple[bool, str]:
     """检查 User-Agent 是否为已知爬虫/机器人"""
@@ -59,6 +103,7 @@ def is_bot(user_agent: str) -> Tuple[bool, str]:
 
 
 # ──── IP 速率限制 ────
+
 
 class IPRateLimiter:
     """基于 IP 的请求频率限制"""
@@ -77,7 +122,9 @@ class IPRateLimiter:
             if ip not in self._windows:
                 self._windows[ip] = []
             # 清理过期记录
-            self._windows[ip] = [(t, w) for t, w in self._windows[ip] if now - t < self.WINDOW]
+            self._windows[ip] = [
+                (t, w) for t, w in self._windows[ip] if now - t < self.WINDOW
+            ]
             count = sum(w for _, w in self._windows[ip])
             if count >= self.MAX_REQUESTS:
                 return False, f"请求过于频繁，{self.WINDOW}秒后再试"
@@ -89,6 +136,7 @@ ip_limiter = IPRateLimiter()
 
 
 # ──── Session 速率限制 ────
+
 
 class RateLimiter:
     """Session 级别的速率限制，防止 token 滥用"""

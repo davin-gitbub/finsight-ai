@@ -99,6 +99,11 @@ class Settings(BaseSettings):
     ]
 
     # ──── 速率限制与 Token 保护 ────
+    page_token_secret: str = Field(
+        default="",
+        alias="PAGE_TOKEN_SECRET",
+        description="页面 token 签名密钥，留空则自动生成（每次重启变化）",
+    )
     rate_limit_per_session: float = 1.5  # 每个 session 请求间隔（秒）
     rate_limit_global_max: int = 5  # 全局最大并发请求数
     query_min_length: int = 2  # 最小提问长度

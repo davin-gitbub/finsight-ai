@@ -65,8 +65,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "x-page-token", "Authorization"],
 )
 
 
@@ -82,28 +82,29 @@ async def security_middleware(request, call_next):
     ua = request.headers.get("user-agent", "")
     path = request.url.path
 
-    # 白名单路径（不检查）
-    if path in ("/health", "/api/token", "/"):
+    # 白名单路径（完全跳过检查）
+    if path in ("/health", "/"):
         return await call_next(request)
 
-    # 1. 机器人检测
-    is_bot_ua, matched = is_bot(ua)
-    if is_bot_ua and path.startswith("/api/"):
-        return JSONResponse({"error": "访问被拒绝"}, status_code=403)
+    # 1. 机器人检测（所有 API）
+    if path.startswith("/api/"):
+        is_bot_ua, matched = is_bot(ua)
+        if is_bot_ua:
+            return JSONResponse({"error": "访问被拒绝"}, status_code=403)
 
-    # 2. Page Token 验证（防外部直接调 API）
+    # 2. IP 速率限制（所有 API + WebSocket）
+    if path.startswith(("/api/", "/ws/")):
+        ok, msg = ip_limiter.check(client_ip)
+        if not ok:
+            return JSONResponse({"error": msg}, status_code=429)
+
+    # 3. Page Token 验证（API 写操作，排除 GET 只读）
     if path.startswith("/api/") and request.method in ("POST", "PUT", "DELETE"):
         from ratelimit import verify_page_token
 
         token = request.headers.get("x-page-token", "")
         if not verify_page_token(token):
             return JSONResponse({"error": "invalid or expired token"}, status_code=401)
-
-    # 3. IP 速率限制（所有 API 路径）
-    if path.startswith(("/api/", "/ws/")):
-        ok, msg = ip_limiter.check(client_ip)
-        if not ok:
-            return JSONResponse({"error": msg}, status_code=429)
 
     # 3. 请求大小限制 (100KB)
     content_length = request.headers.get("content-length")
@@ -132,6 +133,14 @@ if os.path.exists(_env_path):
 
 @app.websocket("/ws/chat")
 async def websocket_chat(websocket: WebSocket):
+    from ratelimit import verify_page_token
+
+    # Token verification
+    token = websocket.query_params.get("token", "")
+    if not verify_page_token(token):
+        await websocket.close(code=4001, reason="invalid or expired token")
+        return
+
     tenant = websocket.query_params.get("tenant", "finsight")
     session_id = websocket.query_params.get("session_id", None)
 
@@ -163,13 +172,13 @@ async def websocket_chat(websocket: WebSocket):
 
     except WebSocketDisconnect:
         pass
-    except Exception as e:
+    except Exception:
         try:
             await websocket.send_json(
                 {
                     "type": "error",
                     "code": "INTERNAL_ERROR",
-                    "content": f"系统错误，请稍后重试：{str(e)}",
+                    "content": "系统错误，请稍后重试",
                 }
             )
         except RuntimeError:
@@ -322,7 +331,7 @@ async def feedback(request: FeedbackRequest):
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "active_sessions": session_manager.active_count}
+    return {"status": "ok"}
 
 
 # ──── 页面 Token（防爬虫验证） ────
